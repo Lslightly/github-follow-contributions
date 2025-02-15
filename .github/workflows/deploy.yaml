@@ -34,8 +34,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
-        pip install requests
-        python main.py
+        uv run python main.py
         mkdir dist
         mv index.html dist
         mv events.json dist
