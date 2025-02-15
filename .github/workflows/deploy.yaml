@@ -26,7 +26,7 @@ jobs:
       with:
         enable-cache: true
 
-    - name: Install dependencies and manim
+    - name: Install dependencies
       run: |
         uv sync --all-extras --locked
 
