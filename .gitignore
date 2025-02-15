@@ -1,1 +1,4 @@
 events.json
+.vscode
+.venv
+uv.lock

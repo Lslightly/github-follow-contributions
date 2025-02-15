@@ -6,6 +6,8 @@ Help you to see what repositories people you follow have recently contributed to
 
 ## Setup
 
+use [`uv sync`](https://docs.astral.sh/uv/getting-started/features/#projects) to get dependencies.
+
 GitHub personal access token is required:
 
 - Apply it [here](https://github.com/settings/personal-access-tokens).
@@ -16,6 +18,12 @@ Once you get the personal access token:
 ```bash
 GITHUB_TOKEN=replace_me python3 main.py
 ```
+
+## Special Attention
+
+If you want to give special attention for some users, use [cp_all.sh](cp_all.sh) to generate [special.yaml](special.yaml) from [all.yaml](all.yaml) and then comment out users.
+
+If you want to see all users you are following, please remove [special.yaml](special.yaml).
 
 ## Local Preview
 
