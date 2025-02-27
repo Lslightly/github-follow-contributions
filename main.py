@@ -1,5 +1,4 @@
 import github
-import argparse
 from github.PaginatedList import PaginatedList
 from github.AuthenticatedUser import AuthenticatedUser
 from github.NamedUser import NamedUser
