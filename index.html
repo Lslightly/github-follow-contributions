@@ -185,9 +185,11 @@
       avatar.src = `https://github.com/${username}.png`;
       avatar.alt = `${username}的头像`;
 
-      const name = document.createElement('div');
+      const name = document.createElement('a');
       name.className = 'username';
+      name.href = `https://github.com/${username}`;
       name.textContent = username;
+      name.target = '_blank'; // 在新标签页打开链接
 
       header.appendChild(avatar);
       header.appendChild(name);
