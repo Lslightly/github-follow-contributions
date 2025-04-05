@@ -228,6 +228,9 @@
         payloads.forEach(payload => {
           let link = document.createElement('a');
           link.target = '_blank';
+          if (payload.head == null) {
+            return;
+          }
           link.textContent = payload.head.slice(0, 6);
           link.href = `https://github.com/${repoName}/tree/${payload.head}`;
           link.style.color = '#333'; // Dark text for the link
