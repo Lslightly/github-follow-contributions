@@ -7,7 +7,7 @@ import yaml
 from tqdm import tqdm
 
 import typing
-from typing import List
+from typing import Any, List
 
 import requests
 from datetime import datetime, timedelta
@@ -69,12 +69,12 @@ def get_all_events(users: List[NamedUser]):
     # events: list[event]
     # user_events: dict[user, events]
     # all_events: list[user_events]
-    all_events: list[dict[str, list[tuple[str, str]]]] = []
+    all_events: list[dict[str, list[tuple[str, str, dict[str, Any]]]]] = []
     for user in tqdm(users):
         user_login = user.login
         tqdm.write(f"Processing user: {user_login}")
         events = get_user_events(user)
-        events = [(event.repo.name, event.type) for event in events]
+        events = [(event.repo.name, event.type, event.payload) for event in events]
         events = deduplicate_list(events)
         user_events = {user_login: events}
         all_events.append(user_events)

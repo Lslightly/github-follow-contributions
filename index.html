@@ -118,6 +118,50 @@
       justify-content: space-between;
       align-items: start;
     }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltip-text {
+      visibility: hidden;
+      width: auto;
+      background-color: #f9f9f9; /* Light background */
+      color: #333; /* Dark text */
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      border: 1px solid #ddd; /* Light border */
+    }
+
+    .tooltip:hover .tooltip-text {
+      visibility: visible;
+    }
+
+    .tooltip .tooltip-text::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #f9f9f9 transparent transparent transparent; /* Match background */
+    }
+
+    .tooltip .tooltip-text a {
+      display: inline-block; /* Allow wrapping */
+      margin: 2px 4px; /* Add small gap between elements */
+      text-decoration: none; /* Remove underline for links */
+    }
   </style>
 </head>
 
@@ -173,6 +217,166 @@
       PublicEvent: 'Public',
     }
 
+
+    const enumEventHoverGen = {
+      WatchEvent: (payloads, repoName) => {
+        return [document.createTextNode("Watch")];
+      },
+      PushEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.head.slice(0, 6);
+          link.href = `https://github.com/${repoName}/tree/${payload.head}`;
+          link.style.color = '#333'; // Dark text for the link
+          elems.push(link);
+        });
+        return elems;
+      },
+      IssuesEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.issue.number.toString();
+          link.href = payload.issue.html_url;
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      PullRequestEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.pull_request.number.toString();
+          link.href = payload.pull_request.html_url;
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      PullRequestReviewEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.pull_request.number.toString();
+          link.href = payload.pull_request.html_url;
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      PullRequestReviewCommentEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.pull_request.number.toString();
+          link.href = payload.comment.html_url;
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      DeleteEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          if (payload.ref != null) {
+            link.textContent = payload.ref;
+          }
+          link.href = `https://github.com/${repoName}/tree/${payload.ref}`;
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      IssueCommentEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.issue.number.toString();
+          link.href = payload.comment.html_url;
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      CreateEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads = payloads.slice(0, 5);
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          if (payload.ref_type != "repository") {
+            link.textContent = payload.ref;
+            link.href = `https://github.com/${repoName}/tree/${payload.ref}`;
+          } else {
+            link.href = `https://github.com/${repoName}`;
+          }
+          link.style.color = '#333'; // Dark text for the link
+          link.target = '_blank'; // Open in a new tab
+          elems.push(link)
+        })
+        return elems;
+      },
+      CommitCommentEvent: (payloads, repoName) => {
+        return [document.createTextNode("CommitComment")];
+      },
+      MemberEvent: (payloads, repoName) => {
+        return [document.createTextNode("Member")];
+      },
+      ForkEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.forkee.full_name;
+          link.href = `https://github.com/${link.textContent}`;
+          link.style.color = '#333'; // Dark text for the link
+          elems.push(link);
+        })
+        return elems;
+      },
+      ReleaseEvent: (payloads, repoName) => {
+        let elems = [];
+        payloads.forEach(payload => {
+          let link = document.createElement('a');
+          link.target = '_blank';
+          link.textContent = payload.release.name;
+          link.href = payload.release.html_url;
+          link.style.color = '#333'; // Dark text for the link
+          elems.push(link);
+        })
+        return elems;
+      },
+      GollumEvent: (payloads, repoName) => {
+        return [document.createTextNode("Gollum")];
+      },
+      PublicEvent: (payloads, repoName) => {
+        return [document.createTextNode("Public")];
+      },
+    }
+
     function createUserCard(username, events) {
       const card = document.createElement('div');
       card.className = 'user-card';
@@ -198,14 +402,18 @@
       const eventMap = {};
 
       events.forEach(event => {
-        const [repoName, eventType] = event;
+        const [repoName, eventType, eventPayload] = event;
         if (!eventMap[repoName]) {
-          eventMap[repoName] = [];
+          eventMap[repoName] = {};
         }
-        eventMap[repoName].push(eventType);
+        if (!eventMap[repoName][eventType]) {
+          eventMap[repoName][eventType] = []
+        }
+        eventMap[repoName][eventType].push(eventPayload);
       });
 
-      for (const [repoName, eventTypes] of Object.entries(eventMap)) {
+      for (const [repoName, eventType2Payloads] of Object.entries(eventMap)) {
+        const eventTypes = Object.keys(eventType2Payloads);
         const eventDiv = document.createElement('div');
         eventDiv.className = 'event-item';
         eventList.appendChild(eventDiv);
@@ -220,10 +428,19 @@
         const tagDiv = document.createElement('div');
         const tags = eventTypes.map(type => {
           const typeSpan = document.createElement('span');
-          typeSpan.className = `event-type`;
+          typeSpan.className = `event-type tooltip`;
           typeSpan.textContent = enumEventShortNames[type] || type;
           const style = enumEventTypeStyles[type] || {};
           Object.assign(typeSpan.style, style);
+
+          const tooltipText = document.createElement('span');
+          tooltipText.className = 'tooltip-text';
+
+          const elems = enumEventHoverGen[type](eventType2Payloads[type], repoName)
+          elems.forEach(elem => { tooltipText.appendChild(elem) });
+
+          typeSpan.appendChild(tooltipText);
+
           return typeSpan;
         });
         tags.forEach(tag => tagDiv.appendChild(tag));
