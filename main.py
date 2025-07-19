@@ -34,7 +34,9 @@ ALL_YAML = "all.yaml"
 
 def get_following_users() -> List[NamedUser]:
     following_plist = Me.get_following()
-    return [user for user in following_plist]
+    res = [user for user in following_plist]
+    res.insert(0, typing.cast(NamedUser, GH.get_user(Me.login)))
+    return res
 
 def dump_following(users: List[NamedUser]):
     all_logins = [user.login for user in users]
