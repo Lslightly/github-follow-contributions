@@ -35,6 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync
+        npm ci
 
     - name: Generate files
       env:
