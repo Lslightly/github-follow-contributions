@@ -1,4 +1,8 @@
 events.json
 .vscode
 .venv
-uv.lock
+node_modules
+.env
+__pycache__
+dist
+profile.*

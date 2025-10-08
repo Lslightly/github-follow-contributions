@@ -25,6 +25,12 @@ jobs:
       uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true
+    
+    - name: Setup NodeJS
+      uses: actions/setup-node@v5
+      with:
+        node-version: 23
+        cache: 'npm'
 
     - name: Install dependencies
       run: |
@@ -32,11 +38,13 @@ jobs:
 
     - name: Generate files
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+        MODEL_NAME: ${{ secrets.MODEL_NAME }}
       run: |
         uv run python main.py
-        mkdir dist
-        mv index.html dist
+        npm run build
         mv events.json dist
 
     - name: Deploy to GitHub Pages

@@ -1,0 +1,30 @@
+{
+  "name": "github-follow-contributions",
+  "version": "1.0.0",
+  "description": "帮你收集 (~~视奸~~) 你 follow 的所有用户最近都贡献了哪些仓库。",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lslightly/github-follow-contributions.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Lslightly/github-follow-contributions/issues"
+  },
+  "homepage": "https://github.com/Lslightly/github-follow-contributions#readme",
+  "dependencies": {
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.1.9"
+  }
+}

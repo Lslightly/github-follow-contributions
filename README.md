@@ -6,17 +6,19 @@ Help you to see what repositories people you follow have recently contributed to
 
 ## Setup
 
-use [`uv sync`](https://docs.astral.sh/uv/getting-started/features/#projects) to get dependencies.
+use [`uv sync`](https://docs.astral.sh/uv/getting-started/features/#projects) to get dependencies. Use `source .venv/bin/activate` to activate the environment.
 
 GitHub personal access token is required:
 
 - Apply it [here](https://github.com/settings/personal-access-tokens).
 - The **read permission of followers** is needed. Permissions -> Followers -> Access: Read-only -> Generate token.
 
-Once you get the personal access token:
+`OPENAI_API_KEY` is also required.
+
+Once you get the personal access token and `OPENAI_API_KEY`, copy `.env.example` to `.env` and set variables accordingly.
 
 ```bash
-GITHUB_TOKEN=replace_me python3 main.py
+python3 main.py
 ```
 
 ## Special Attention
@@ -25,7 +27,23 @@ If you want to give special attention to some users, use [cp_all.sh](cp_all.sh) 
 
 If you want to see all users you are following, please remove [special.yaml](special.yaml).
 
+## Development
+
+Host the website:
+
+```bash
+npm run dev
+```
+
 ## Local Preview
+
+Run following commands to generate static website in `dist` directory.
+
+```bash
+npm run build
+cp events.json dist
+cd dist
+```
 
 Host the website:
 
@@ -41,7 +59,7 @@ You can filter events that you are interested in.
 
 (In repository page)
 
-1. Settings -> Secrets and variables -> Actions -> Repository secrets -> set `GH_TOKEN` to the **personal access token** above.
+1. Settings -> Secrets and variables -> Actions -> Repository secrets -> set secrets according to [.env.example](./.env.example).
 2. Settings -> Actions -> General -> Workflow permissions -> **Read and write permissions**.
 3. Actions -> Build and Deploy to GitHub Pages -> **Run workflow**.
 4. Settings -> GitHub Pages -> Source: `gh-pages` branch.

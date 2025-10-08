@@ -1,36 +1,15 @@
-import github
-from github.PaginatedList import PaginatedList
-from github.AuthenticatedUser import AuthenticatedUser
 from github.NamedUser import NamedUser
 import yaml
 
 from tqdm import tqdm
 
-import typing
-from typing import Any, List
-
-import requests
 from datetime import datetime, timedelta
-import time
 import json
 import os
 
-PAGE_LIMIT = 10
-DAYS_AGO = 30
-
-def print_help():
-    print('Usage: GITHUB_TOKEN=your_token python main.py [OPTIONS]')
-
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
-if not GITHUB_TOKEN:
-    print_help()
-    exit(1)
-
-HEADERS = {'Authorization': f'token {GITHUB_TOKEN}'}
-GH = github.Github(auth=github.Auth.Token(GITHUB_TOKEN))
-Me = typing.cast(AuthenticatedUser, GH.get_user())
-SPECIAL_YAML = "special.yaml"
-ALL_YAML = "all.yaml"
+from mytyping import *  # noqa: F403
+from config import *  # noqa: F403
+import event_analysis
 
 def get_following_users() -> List[NamedUser]:
     following_plist = Me.get_following()
@@ -59,6 +38,7 @@ def filter_date(t: datetime):
 def get_user_events(user: NamedUser):
     events_plist = user.get_events()
     events = [event for event in events_plist if filter_date(event.created_at)]
+    events.sort(key=lambda e: e.created_at, reverse=True)
     return events
 
 def deduplicate_list(lst):
@@ -71,14 +51,22 @@ def get_all_events(users: List[NamedUser]):
     # events: list[event]
     # user_events: dict[user, events]
     # all_events: list[user_events]
-    all_events: list[dict[str, list[tuple[str, str, dict[str, Any]]]]] = []
-    for user in tqdm(users):
+    all_events: list[dict[str, Any]] = []
+    for user in tqdm(users[:]):
         user_login = user.login
         tqdm.write(f"Processing user: {user_login}")
         events = get_user_events(user)
-        events = [(event.repo.name, event.type, event.payload) for event in events]
-        events = deduplicate_list(events)
-        user_events = {user_login: events}
+        tqdm.write(f"Events Num: {len(events)}")
+        # topics = event_analysis.DEFAULT_TOPICS
+        repo_et_payload = [(event.repo.name, event.type, event.payload) for event in events]
+        repo_et_payload = deduplicate_list(repo_et_payload)
+        topics = event_analysis.summarize_topics(events[:SUMMARY_EVENT_LIMIT])
+        user_events = {
+            "username": user_login,
+            "events": repo_et_payload,
+            "summary_topics": topics,
+        }
+        tqdm.write(f"len(events): {len(events)}, len(topics): {len(topics)}")
         all_events.append(user_events)
 
     return all_events
