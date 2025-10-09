@@ -44,9 +44,9 @@ jobs:
         OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
         MODEL_NAME: ${{ secrets.MODEL_NAME }}
       run: |
+        mkdir public
         uv run python main.py
         npm run build
-        mv events.json dist
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3

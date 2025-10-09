@@ -77,5 +77,6 @@ if __name__ == '__main__':
     dump_following(following)
     special = filter_special(following)
     events = get_all_events(special)
-    with open('events.json', 'w') as f:
+    os.makedirs("public", exist_ok=True)
+    with open('public/events.json', 'w') as f:
         json.dump(events, f)
