@@ -136,7 +136,11 @@ def summarize_topics(events: List[Event]) -> Dict[str, str]:
         if event.type in DISCUSS_EVENT_TYPES:
             title = ""
             if event.type in ['PullRequestReviewEvent', 'PullRequestReviewCommentEvent', 'PullRequestReviewThreadEvent']:
-                title = event.payload["pull_request"]["title"]
+                pr = event.payload["pull_request"]
+                if pr is None or "title" not in pr: # it seems that some PR does not have title
+                    title = "unknown"
+                else:
+                    title = pr["title"]
             else:
                 title = event.payload["issue"]["title"]
             discuss_repo2issue_titles[repo_name].add(title)
