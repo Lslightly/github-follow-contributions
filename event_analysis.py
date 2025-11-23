@@ -34,23 +34,24 @@ def _zero_shot(prompt: str) -> str:
     Core LLM call function to summarize repository topics using a zero-shot prompt.
     Returns a direct text summary.
     """
-    client = openai.OpenAI(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        base_url=os.getenv("OPENAI_BASE_URL"),
-    )
-    
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                'role': 'user',
-                'content': prompt,
-            }
-        ],
-        model=os.getenv("MODEL_NAME", "qwen-plus"),
-    )
-    
-    summary = chat_completion.choices[0].message.content
-    return summary.strip() if summary else UNKNOWN_SUMMARY
+    try:
+        client = openai.OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+        )
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    'role': 'user',
+                    'content': prompt,
+                }
+            ],
+            model=os.getenv("MODEL_NAME", "qwen-plus"),
+        )
+        content = chat_completion.choices[0].message.content
+        return content.strip() if content else UNKNOWN_SUMMARY
+    except Exception:
+        return UNKNOWN_SUMMARY
 
 def summarize_repos_for_working(repos: List[Dict[str, str]]) -> str:
     """
