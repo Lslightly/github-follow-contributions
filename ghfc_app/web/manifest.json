@@ -1,6 +1,6 @@
 {
-    "name": "ghfc_app",
-    "short_name": "ghfc_app",
+    "name": "GitHub User Activity Tracking",
+    "short_name": "GitHub Activity",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

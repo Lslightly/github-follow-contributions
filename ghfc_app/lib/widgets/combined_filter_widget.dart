@@ -1,0 +1,512 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
+import '../providers/event_provider.dart';
+import '../utils/localizations.dart';
+
+class CombinedFilterWidget extends StatefulWidget {
+  final ScrollController scrollController;
+  
+  const CombinedFilterWidget({
+    super.key,
+    required this.scrollController,
+  });
+
+  @override
+  State<CombinedFilterWidget> createState() => _CombinedFilterWidgetState();
+}
+
+class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
+  bool _isExpanded = true;
+  bool _isScrollingDown = false;
+  double _lastScrollPosition = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    widget.scrollController.addListener(_onScroll);
+    // 监听语言变化
+    AppLocalizations.languageNotifier.addListener(_onLanguageChanged);
+  }
+  
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_onScroll);
+    AppLocalizations.languageNotifier.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+ 
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        // 语言改变时重新构建界面
+      });
+    }
+  }
+  
+  void _onScroll() {
+    final currentPosition = widget.scrollController.position.pixels;
+    final isScrollingDown = currentPosition > _lastScrollPosition && currentPosition > 50;
+    
+    if (isScrollingDown != _isScrollingDown) {
+      setState(() {
+        _isScrollingDown = isScrollingDown;
+        if (_isScrollingDown) {
+          _isExpanded = false;
+        }
+      });
+    }
+    
+    _lastScrollPosition = currentPosition;
+    
+    // Auto-expand when scrolling up
+    if (!_isScrollingDown && currentPosition < 50) {
+      setState(() {
+        _isExpanded = true;
+      });
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: _isExpanded ? _buildExpandedView() : _buildCollapsedView(),
+    );
+  }
+  
+  Widget _buildExpandedView() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE1E4E8)),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // User filter row
+          Consumer<EventProvider>(
+            builder: (context, provider, _) {
+              return Row(
+                children: [
+                  const Icon(Icons.search, size: 20, color: Color(0xFF586069)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.filterUsers,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        suffixIcon: provider.userQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              onPressed: () => provider.setUserQuery(''),
+                            )
+                          : null,
+                      ),
+                      onChanged: provider.setUserQuery,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Legend expand button
+                  _buildLegendToggleButton(),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          // Compact legend
+          _buildCompactLegend(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildCollapsedView() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE1E4E8)),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.filter_list, size: 16, color: Color(0xFF586069)),
+              const SizedBox(width: 8),
+              Consumer<EventProvider>(
+                builder: (context, provider, _) {
+                  return Text(
+                    provider.userQuery.isNotEmpty 
+                      ? '${AppLocalizations.userFilter}${provider.userQuery}'
+                      : AppLocalizations.filterUsers,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
+                  );
+                },
+              ),
+            ],
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Consumer<EventProvider>(
+                builder: (context, provider, _) {
+                  final selectedCount = provider.selectedEventTypes.length;
+                  final totalCount = provider.eventTypes.length;
+                  return Text(
+                    '$selectedCount/$totalCount',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildLegendToggleButton(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildLegendToggleButton() {
+    return Consumer<EventProvider>(
+      builder: (context, provider, _) {
+        return IconButton(
+          icon: const Icon(Icons.filter_alt, size: 18),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(AppLocalizations.eventTypeFilter),
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () => provider.setAllEventsSelected(true),
+                          child: Text(AppLocalizations.selectAll),
+                        ),
+                        TextButton(
+                          onPressed: () => provider.setAllEventsSelected(false),
+                          child: Text(AppLocalizations.deselectAll),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: provider.topicCategories.length,
+                    itemBuilder: (context, index) {
+                      final entry = provider.topicCategories.entries.elementAt(index);
+                      return _buildCategoryDialogItem(entry, provider);
+                    },
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(AppLocalizations.close),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+  
+  Widget _buildCompactLegend() {
+    return Consumer<EventProvider>(
+      builder: (context, provider, _) {
+        return SizedBox(
+          height: 24,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: provider.topicCategories.length,
+            itemBuilder: (context, index) {
+              final entry = provider.topicCategories.entries.elementAt(index);
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildCompactCategoryChip(entry, provider),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildCompactCategoryChip(MapEntry<String, List<String>> entry, EventProvider provider) {
+    final categoryColor = _getCategoryColor(context, entry.key);
+    final selectedCount = entry.value.where((event) => provider.selectedEventTypes.contains(event)).length;
+    final totalCount = entry.value.length;
+    
+    // Create tooltip message with event descriptions
+    final tooltipMessage = entry.value.map((event) {
+      final shortName = provider.enumEventShortNames[event] ?? event;
+      final description = provider.getEventDescription(event);
+      return '$shortName: $description';
+    }).join('\n');
+    
+    return Tooltip(
+      message: tooltipMessage,
+      preferBelow: false,
+      verticalOffset: 10,
+      waitDuration: const Duration(milliseconds: 500),
+      showDuration: const Duration(seconds: 3),
+      child: GestureDetector(
+        onTap: () => _showCategoryEventsDialog(entry, provider),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: categoryColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selectedCount > 0 ? categoryColor : Colors.grey.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                AppLocalizations.translate(entry.key),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: selectedCount > 0 ? Colors.black87 : Colors.grey,
+                ),
+              ),
+              if (selectedCount < totalCount) ...[
+                const SizedBox(width: 4),
+                Text(
+                  '$selectedCount/$totalCount',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCategoryDialogItem(MapEntry<String, List<String>> entry, EventProvider provider) {
+    final categoryColor = _getCategoryColor(context, entry.key);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: categoryColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            AppLocalizations.translate(entry.key),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: entry.value.map((event) => _buildEventCheckbox(event, provider)).toList(),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+  
+  Widget _buildEventCheckbox(String event, EventProvider provider) {
+    return Consumer<EventProvider>(
+      builder: (context, provider, _) {
+        final isSelected = provider.selectedEventTypes.contains(event);
+        
+        return SizedBox(
+          width: 140,
+          child: GestureDetector(
+            onLongPress: () => _showEventDocumentation(event, provider),
+            child: Tooltip(
+              message: provider.getEventDescription(event),
+              preferBelow: false,
+              verticalOffset: 10,
+              waitDuration: const Duration(milliseconds: 250),
+              showDuration: const Duration(seconds: 5),
+              child: CheckboxListTile(
+                title: Text(
+                  provider.enumEventShortNames[event] ?? event,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                value: isSelected,
+                onChanged: (_) {
+                  provider.toggleEventType(event);
+                },
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Color _getCategoryColor(BuildContext context, String category) {
+    switch (category) {
+      case 'work':
+        return Theme.of(context).colorScheme.primaryContainer;
+      case 'discuss':
+        return Theme.of(context).colorScheme.secondaryContainer;
+      case 'watch':
+        return Theme.of(context).colorScheme.tertiaryContainer;
+      default:
+        return Colors.grey;
+    }
+  }
+  
+  void _showEventDocumentation(String event, EventProvider provider) {
+    final link = provider.eventDocLinks[event] ?? 'https://docs.github.com/en/webhooks/webhook-events-and-payloads';
+    final desc = provider.getEventDescription(event);
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                provider.enumEventShortNames[event] ?? event,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                desc,
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final uri = Uri.parse(link);
+                    unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
+                  },
+                  child: Text(AppLocalizations.viewDocs),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  void _showCategoryEventsDialog(MapEntry<String, List<String>> entry, EventProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('${AppLocalizations.translate(entry.key)} ${AppLocalizations.eventTypes}'),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () {
+                    // Select all events in this category
+                    final eventsToSelect = entry.value.where((event) => !provider.selectedEventTypes.contains(event)).toList();
+                    for (final event in eventsToSelect) {
+                      provider.toggleEventType(event);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Text(AppLocalizations.selectAll),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Deselect all events in this category
+                    final eventsToDeselect = entry.value.where((event) => provider.selectedEventTypes.contains(event)).toList();
+                    for (final event in eventsToDeselect) {
+                      provider.toggleEventType(event);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: Text(AppLocalizations.deselectAll),
+                ),
+              ],
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: entry.value.length,
+            itemBuilder: (context, index) {
+              final event = entry.value[index];
+              return _buildEventCheckbox(event, provider);
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.close),
+          ),
+        ],
+      ),
+    );
+  }
+}

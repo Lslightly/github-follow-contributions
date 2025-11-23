@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import '../models/event_data.dart';
+import '../utils/localizations.dart';
 
 class SimpleState extends ChangeNotifier {
   
@@ -22,6 +23,22 @@ class EventProvider extends ChangeNotifier {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   List<EventData> _displayedUsers = [];
+  
+  EventProvider() {
+    // 监听语言变化，及时更新事件描述
+    AppLocalizations.languageNotifier.addListener(_onLanguageChanged);
+  }
+  
+  @override
+  void dispose() {
+    AppLocalizations.languageNotifier.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+  
+  void _onLanguageChanged() {
+    // 语言切换时通知所有监听者重新构建
+    notifyListeners();
+  }
   
   final Map<String, List<String>> topicCategories = {
     'work': ['CreateEvent', 'PushEvent', 'PullRequestEvent'],
@@ -67,24 +84,45 @@ class EventProvider extends ChangeNotifier {
     'PublicEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#public',
   };
 
-  final Map<String, String> eventDescriptions = {
-    'WatchEvent': 'Star 仓库以关注更新。',
-    'PushEvent': '向分支推送提交。',
-    'IssuesEvent': '创建、关闭或编辑 Issue。',
-    'PullRequestEvent': '打开、更新或合并 Pull Request。',
-    'PullRequestReviewEvent': '提交或更新 PR 评审。',
-    'PullRequestReviewCommentEvent': '在 PR 评审中添加评论。',
-    'PullRequestReviewThreadEvent': 'PR 评审会话的讨论线程。',
-    'DeleteEvent': '删除分支或标签。',
-    'IssueCommentEvent': '在 Issue 下添加评论。',
-    'CreateEvent': '创建分支或标签。',
-    'CommitCommentEvent': '对提交添加评论。',
-    'MemberEvent': '添加或移除仓库协作者。',
-    'ForkEvent': '派生仓库以进行修改。',
-    'ReleaseEvent': '发布软件版本。',
-    'GollumEvent': '更新仓库 Wiki 页面。',
-    'PublicEvent': '将仓库设置为公开。',
-  };
+  // 动态获取事件描述，支持语言切换
+  String getEventDescription(String eventType) {
+    switch (eventType) {
+      case 'WatchEvent':
+        return AppLocalizations.watchEventDesc;
+      case 'PushEvent':
+        return AppLocalizations.pushEventDesc;
+      case 'IssuesEvent':
+        return AppLocalizations.issuesEventDesc;
+      case 'PullRequestEvent':
+        return AppLocalizations.pullRequestEventDesc;
+      case 'PullRequestReviewEvent':
+        return AppLocalizations.pullRequestReviewEventDesc;
+      case 'PullRequestReviewCommentEvent':
+        return AppLocalizations.pullRequestReviewCommentEventDesc;
+      case 'PullRequestReviewThreadEvent':
+        return AppLocalizations.pullRequestReviewThreadEventDesc;
+      case 'DeleteEvent':
+        return AppLocalizations.deleteEventDesc;
+      case 'IssueCommentEvent':
+        return AppLocalizations.issueCommentEventDesc;
+      case 'CreateEvent':
+        return AppLocalizations.createEventDesc;
+      case 'CommitCommentEvent':
+        return AppLocalizations.commitCommentEventDesc;
+      case 'MemberEvent':
+        return AppLocalizations.memberEventDesc;
+      case 'ForkEvent':
+        return AppLocalizations.forkEventDesc;
+      case 'ReleaseEvent':
+        return AppLocalizations.releaseEventDesc;
+      case 'GollumEvent':
+        return AppLocalizations.gollumEventDesc;
+      case 'PublicEvent':
+        return AppLocalizations.publicEventDesc;
+      default:
+        return eventType;
+    }
+  }
 
   final Map<String, String> enumEventShortNames = {
     'WatchEvent': 'Watch',

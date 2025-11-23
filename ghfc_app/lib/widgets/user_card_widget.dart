@@ -399,26 +399,102 @@ class _Avatar extends StatefulWidget {
 
 class _AvatarState extends State<_Avatar> {
   bool _failed = false;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
+  static const Duration _retryDelay = Duration(seconds: 2);
+  
+  @override
+  void initState() {
+    super.initState();
+    _startRetryTimer();
+  }
+  
+  void _startRetryTimer() {
+    // 如果头像加载失败，启动重试定时器
+    if (_failed && _retryCount < _maxRetries) {
+      Future.delayed(_retryDelay * (_retryCount + 1), () {
+        if (mounted && _failed) {
+          setState(() {
+            _failed = false; // 重置失败状态，重新尝试加载
+          });
+        }
+      });
+    }
+  }
+  
+  void _onImageError(Object error, StackTrace? stackTrace) {
+    if (mounted) {
+      setState(() {
+        _failed = true;
+        _retryCount++;
+      });
+      _startRetryTimer(); // 启动下一次重试
+    }
+  }
+  
+  void _manualRetry() {
+    if (mounted) {
+      setState(() {
+        _failed = false;
+        _retryCount = 0; // 重置重试计数
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 40,
       height: 40,
-      child: _failed
-          ? CircleAvatar(
-              child: Text(
-                widget.username.substring(0, 1).toUpperCase(),
-                style: const TextStyle(fontSize: 16),
+      child: Stack(
+        children: [
+          // 头像主体
+          Positioned.fill(
+            child: _failed
+                ? CircleAvatar(
+                    child: Text(
+                      widget.username.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  )
+                : CircleAvatar(
+                    backgroundImage: NetworkImage(
+                        'https://avatars.githubusercontent.com/${widget.username}?v=4&s=80'),
+                    onBackgroundImageError: _onImageError,
+                  ),
+          ),
+          // 刷新按钮（仅在失败时显示）
+          if (_failed)
+            Positioned(
+              right: -4,
+              top: -4,
+              child: GestureDetector(
+                onTap: _manualRetry,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.refresh,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            )
-          : CircleAvatar(
-              backgroundImage: NetworkImage(
-                  'https://avatars.githubusercontent.com/${widget.username}?v=4&s=80'),
-              onBackgroundImageError: (_, __) {
-                if (mounted) setState(() => _failed = true);
-              },
             ),
+        ],
+      ),
     );
   }
 }

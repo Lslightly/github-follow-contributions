@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/event_provider.dart';
 import 'screens/home_screen.dart';
 
+
 void main() {
   runApp(const MyApp());
 }
@@ -15,12 +16,13 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => EventProvider(),
       child: MaterialApp(
-        title: 'GitHub Follow Contributions',
+        title: 'GitHub User Activity Tracking',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
-        home: HomeScreen(),
+        locale: const Locale('zh', 'CN'), // Default to Chinese
+        home: const HomeScreen(),
       ),
     );
   }
