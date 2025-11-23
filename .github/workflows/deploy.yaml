@@ -26,33 +26,46 @@ jobs:
       with:
         enable-cache: true
     
-    - name: Setup NodeJS
-      uses: actions/setup-node@v5
-      with:
-        node-version: 23
-        cache: 'npm'
+    - name: Sync Python dependencies
+      run: uv sync
 
-    - name: Install dependencies
-      run: |
-        uv sync
-        npm ci
-
-    - name: Generate files
+    - name: Generate events.json
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
         MODEL_NAME: ${{ secrets.MODEL_NAME }}
       run: |
-        mkdir public
+        mkdir -p public
         uv run python main.py
-        npm run build
+
+    - name: Copy events.json into Flutter assets
+      run: |
+        mkdir -p ghfc_app/assets
+        cp -f public/events.json ghfc_app/assets/events.json
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        cache: true
+
+    - name: Enable Flutter Web
+      run: flutter config --enable-web
+
+    - name: Install Flutter dependencies
+      working-directory: ghfc_app
+      run: flutter pub get
+
+    - name: Build Flutter Web (release)
+      working-directory: ghfc_app
+      run: flutter build web --release --base-href /github-follow-contributions/
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
+        publish_dir: ghfc_app/build/web
         publish_branch: gh-pages
         keep_files: false
         force_orphan: true
