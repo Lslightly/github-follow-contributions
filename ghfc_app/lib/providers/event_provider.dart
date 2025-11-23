@@ -13,6 +13,7 @@ class EventProvider extends ChangeNotifier {
   List<EventData> _users = [];
   List<String> _eventTypes = [];
   List<String> _selectedEventTypes = [];
+  String _userQuery = '';
   String? _errorMessage;
   
   // Pagination and lazy loading
@@ -35,6 +36,7 @@ class EventProvider extends ChangeNotifier {
     'PullRequestEvent': {'backgroundColor': '#ffebe9', 'color': '#cf222e'},
     'PullRequestReviewEvent': {'backgroundColor': '#ddf4ff', 'color': '#0550ae'},
     'PullRequestReviewCommentEvent': {'backgroundColor': '#ddf4ff', 'color': '#0550ae'},
+    'PullRequestReviewThreadEvent': {'backgroundColor': '#ddf4ff', 'color': '#0550ae'},
     'DeleteEvent': {'backgroundColor': '#f1f8ff', 'color': '#0366d6'},
     'IssueCommentEvent': {'backgroundColor': '#ddf4ff', 'color': '#0550ae'},
     'CreateEvent': {'backgroundColor': '#ffebe9', 'color': '#cf222e'},
@@ -44,6 +46,44 @@ class EventProvider extends ChangeNotifier {
     'ReleaseEvent': {'backgroundColor': '#f0f8ff', 'color': '#0366d6'},
     'GollumEvent': {'backgroundColor': '#f0f8ff', 'color': '#0366d6'},
     'PublicEvent': {'backgroundColor': '#f1f8ff', 'color': '#0366d6'},
+  };
+
+  final Map<String, String> eventDocLinks = {
+    'WatchEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#watch',
+    'PushEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#push',
+    'IssuesEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#issues',
+    'PullRequestEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request',
+    'PullRequestReviewEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review',
+    'PullRequestReviewCommentEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_comment',
+    'PullRequestReviewThreadEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#pull_request_review_thread',
+    'DeleteEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#delete',
+    'IssueCommentEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#issue_comment',
+    'CreateEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#create',
+    'CommitCommentEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#commit_comment',
+    'MemberEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#member',
+    'ForkEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#fork',
+    'ReleaseEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#release',
+    'GollumEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#gollum',
+    'PublicEvent': 'https://docs.github.com/en/webhooks/webhook-events-and-payloads#public',
+  };
+
+  final Map<String, String> eventDescriptions = {
+    'WatchEvent': 'Star 仓库以关注更新。',
+    'PushEvent': '向分支推送提交。',
+    'IssuesEvent': '创建、关闭或编辑 Issue。',
+    'PullRequestEvent': '打开、更新或合并 Pull Request。',
+    'PullRequestReviewEvent': '提交或更新 PR 评审。',
+    'PullRequestReviewCommentEvent': '在 PR 评审中添加评论。',
+    'PullRequestReviewThreadEvent': 'PR 评审会话的讨论线程。',
+    'DeleteEvent': '删除分支或标签。',
+    'IssueCommentEvent': '在 Issue 下添加评论。',
+    'CreateEvent': '创建分支或标签。',
+    'CommitCommentEvent': '对提交添加评论。',
+    'MemberEvent': '添加或移除仓库协作者。',
+    'ForkEvent': '派生仓库以进行修改。',
+    'ReleaseEvent': '发布软件版本。',
+    'GollumEvent': '更新仓库 Wiki 页面。',
+    'PublicEvent': '将仓库设置为公开。',
   };
 
   final Map<String, String> enumEventShortNames = {
@@ -67,6 +107,7 @@ class EventProvider extends ChangeNotifier {
   List<EventData> get users => _users;
   List<String> get eventTypes => _eventTypes;
   List<String> get selectedEventTypes => _selectedEventTypes;
+  String get userQuery => _userQuery;
   String? get errorMessage => _errorMessage;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMoreData => _hasMoreData;
@@ -163,6 +204,11 @@ class EventProvider extends ChangeNotifier {
     _resetPaginationAndReload();
   }
 
+  void setUserQuery(String query) {
+    _userQuery = query.trim();
+    _resetPaginationAndReload();
+  }
+
   List<EventData> get filteredUsers {
     final filtered = _users.map((user) {
       final filteredEvents = user.events.where((event) => 
@@ -172,7 +218,11 @@ class EventProvider extends ChangeNotifier {
         events: filteredEvents,
         summaryTopics: user.summaryTopics,
       );
-    }).where((user) => user.events.isNotEmpty).toList();
+    }).where((user) {
+      if (user.events.isNotEmpty == false) return false;
+      if (_userQuery.isEmpty) return true;
+      return user.username.toLowerCase().contains(_userQuery.toLowerCase());
+    }).toList();
     return filtered;
   }
 

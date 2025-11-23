@@ -1,102 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/event_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
-class LegendWidget extends StatelessWidget {
+class LegendWidget extends StatefulWidget {
   const LegendWidget({super.key});
+
+  @override
+  State<LegendWidget> createState() => _LegendWidgetState();
+}
+
+class _LegendWidgetState extends State<LegendWidget> {
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
     final eventProvider = Provider.of<EventProvider>(context);
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE1E4E8)),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ...eventProvider.topicCategories.entries.map((entry) => 
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: _getCategoryColor(context, entry.key),
-                    ),
-                    child: Text(
-                      entry.key,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    '→',
-                    style: TextStyle(
-                      color: Color(0xFF586069),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: entry.value.map((event) => 
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getEventBackgroundColor(context, eventProvider, event),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _getEventBorderColor(context, eventProvider, event),
-                            ),
-                          ),
-                          child: Text(
-                            eventProvider.enumEventShortNames[event] ?? event,
-                            style: TextStyle(
-                              color: _getEventTextColor(context, eventProvider, event),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text(
-              '将鼠标悬浮在tag上以获得总结。',
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: Color(0xFF586069),
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildHeader(eventProvider),
+        if (_expanded) _buildExpandedContent(eventProvider),
+      ],
     );
   }
 
@@ -113,59 +39,196 @@ class LegendWidget extends StatelessWidget {
     }
   }
 
-  Color _getEventBackgroundColor(BuildContext context, EventProvider provider, String event) {
-    final scheme = Theme.of(context).colorScheme;
-    if (provider.topicCategories['work']?.contains(event) == true) {
-      return scheme.primaryContainer;
-    }
-    if (provider.topicCategories['discuss']?.contains(event) == true) {
-      return scheme.secondaryContainer;
-    }
-    if (provider.topicCategories['watch']?.contains(event) == true) {
-      return scheme.tertiaryContainer;
-    }
-    final hex = provider.enumEventTypeStyles[event]?['backgroundColor'];
-    return _hexToColor(hex) ?? const Color(0xFFF3F4F6);
+  Widget _buildHeader(EventProvider eventProvider) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE1E4E8)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            '事件类型说明',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          Row(
+            children: [
+              // Filter controls
+              if (_expanded) ...[
+                TextButton(
+                  onPressed: () => eventProvider.setAllEventsSelected(true),
+                  child: const Text('全选', style: TextStyle(fontSize: 12)),
+                ),
+                TextButton(
+                  onPressed: () => eventProvider.setAllEventsSelected(false),
+                  child: const Text('全不选', style: TextStyle(fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // Collapse button
+              IconButton(
+                icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more, size: 20),
+                onPressed: () => setState(() => _expanded = !_expanded),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  Color _getEventTextColor(BuildContext context, EventProvider provider, String event) {
-    final scheme = Theme.of(context).colorScheme;
-    if (provider.topicCategories['work']?.contains(event) == true) {
-      return scheme.onPrimaryContainer;
-    }
-    if (provider.topicCategories['discuss']?.contains(event) == true) {
-      return scheme.onSecondaryContainer;
-    }
-    if (provider.topicCategories['watch']?.contains(event) == true) {
-      return scheme.onTertiaryContainer;
-    }
-    final hex = provider.enumEventTypeStyles[event]?['color'];
-    return _hexToColor(hex) ?? const Color(0xFF586069);
+  Widget _buildExpandedContent(EventProvider eventProvider) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE1E4E8)),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...eventProvider.topicCategories.entries.map((entry) => _buildCategoryItem(entry, eventProvider)),
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text(
+              '将鼠标悬浮在tag上以获得总结，长按查询文档。',
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                color: Color(0xFF586069),
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Color _getEventBorderColor(BuildContext context, EventProvider provider, String event) {
-    final scheme = Theme.of(context).colorScheme;
-    if (provider.topicCategories['work']?.contains(event) == true) {
-      return scheme.onPrimaryContainer.withValues(alpha: 0.25);
-    }
-    if (provider.topicCategories['discuss']?.contains(event) == true) {
-      return scheme.onSecondaryContainer.withValues(alpha: 0.25);
-    }
-    if (provider.topicCategories['watch']?.contains(event) == true) {
-      return scheme.onTertiaryContainer.withValues(alpha: 0.25);
-    }
-    final hex = provider.enumEventTypeStyles[event]?['color'];
-    final c = _hexToColor(hex);
-    if (c == null) return const Color(0xFFE1E4E8);
-    return c.withValues(alpha: 0.25);
+  Widget _buildCategoryItem(MapEntry<String, List<String>> entry, EventProvider eventProvider) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: _getCategoryColor(context, entry.key),
+            ),
+            child: Text(
+              entry.key,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            '→',
+            style: TextStyle(
+              color: Color(0xFF586069),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: entry.value.map<Widget>((event) => _buildEventCheckbox(event, eventProvider)).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Color? _hexToColor(String? hex) {
-    if (hex == null) return null;
-    var h = hex.replaceAll('#', '');
-    if (h.length == 6) h = 'ff$h';
-    final v = int.tryParse(h, radix: 16);
-    if (v == null) return null;
-    return Color(v);
+  Widget _buildEventCheckbox(String event, EventProvider eventProvider) {
+    final isSelected = eventProvider.selectedEventTypes.contains(event);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onLongPress: () => _showEventDocumentation(event, eventProvider),
+          child: Tooltip(
+            message: eventProvider.eventDescriptions[event] ?? event,
+            preferBelow: false,
+            verticalOffset: 10,
+            waitDuration: const Duration(milliseconds: 250),
+            showDuration: const Duration(seconds: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => eventProvider.toggleEventType(event),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                Text(
+                  eventProvider.enumEventShortNames[event] ?? event,
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showEventDocumentation(String event, EventProvider eventProvider) {
+    final link = eventProvider.eventDocLinks[event] ?? 'https://docs.github.com/en/webhooks/webhook-events-and-payloads';
+    final desc = eventProvider.eventDescriptions[event] ?? event;
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eventProvider.enumEventShortNames[event] ?? event,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                desc,
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final uri = Uri.parse(link);
+                    unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
+                  },
+                  child: const Text('查看文档'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

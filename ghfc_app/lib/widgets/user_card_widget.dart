@@ -100,7 +100,7 @@ class UserCardWidget extends StatelessWidget {
           const SizedBox(height: 15),
           
           if (eventEntries.length <= 6)
-            ...eventEntries.map((entry) => _buildEventRow(context, entry, eventProvider)).toList()
+            ...eventEntries.map((entry) => _buildEventRow(context, entry, eventProvider))
           else
             SizedBox(
               height: 240,
@@ -227,7 +227,6 @@ class UserCardWidget extends StatelessWidget {
 
   void _showEventPopover(BuildContext context, LayerLink link, String eventType, List<dynamic> payloads, String repoName) {
     final overlay = Overlay.of(context);
-    if (overlay == null) return;
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (ctx) {
@@ -297,13 +296,13 @@ class UserCardWidget extends StatelessWidget {
     final List<Map<String, String>> out = [];
     switch (eventType) {
       case 'WatchEvent':
-        out.add({'label': 'Watch ' + repoName, 'url': 'https://github.com/$repoName'});
+        out.add({'label': 'Watch $repoName', 'url': 'https://github.com/$repoName'});
         break;
       case 'PushEvent':
         for (final p in limited) {
           final head = (p['head'] ?? '').toString();
           if (head.isNotEmpty) {
-            out.add({'label': 'commit ' + head.substring(0, head.length.clamp(0, 7)), 'url': 'https://github.com/$repoName/commit/$head'});
+            out.add({'label': 'commit ${head.substring(0, head.length.clamp(0, 7))}', 'url': 'https://github.com/$repoName/commit/$head'});
           }
         }
         break;
@@ -311,7 +310,7 @@ class UserCardWidget extends StatelessWidget {
         for (final p in limited) {
           final num = p['issue']?['number']?.toString() ?? '';
           if (num.isNotEmpty) {
-            out.add({'label': 'issue #' + num, 'url': 'https://github.com/$repoName/issues/$num'});
+            out.add({'label': 'issue #$num', 'url': 'https://github.com/$repoName/issues/$num'});
           }
         }
         break;
@@ -322,7 +321,7 @@ class UserCardWidget extends StatelessWidget {
         for (final p in limited) {
           final num = p['pull_request']?['number']?.toString() ?? '';
           if (num.isNotEmpty) {
-            out.add({'label': 'PR #' + num, 'url': 'https://github.com/$repoName/pull/$num'});
+            out.add({'label': 'PR #$num', 'url': 'https://github.com/$repoName/pull/$num'});
           }
         }
         break;
@@ -330,7 +329,7 @@ class UserCardWidget extends StatelessWidget {
         for (final p in limited) {
           final ref = (p['ref'] ?? '').toString();
           if (ref.isNotEmpty) {
-            out.add({'label': 'deleted ' + ref, 'url': 'https://github.com/$repoName'});
+            out.add({'label': 'deleted $ref', 'url': 'https://github.com/$repoName'});
           }
         }
         break;
@@ -338,7 +337,7 @@ class UserCardWidget extends StatelessWidget {
         for (final p in limited) {
           final num = p['issue']?['number']?.toString() ?? '';
           if (num.isNotEmpty) {
-            out.add({'label': 'comment on #' + num, 'url': 'https://github.com/$repoName/issues/$num'});
+            out.add({'label': 'comment on #$num', 'url': 'https://github.com/$repoName/issues/$num'});
           }
         }
         break;
@@ -347,9 +346,9 @@ class UserCardWidget extends StatelessWidget {
           final refType = (p['ref_type'] ?? '').toString();
           final ref = (p['ref'] ?? '').toString();
           if (refType == 'branch' && ref.isNotEmpty) {
-            out.add({'label': 'branch ' + ref, 'url': 'https://github.com/$repoName/tree/$ref'});
+            out.add({'label': 'branch $ref', 'url': 'https://github.com/$repoName/tree/$ref'});
           } else if (refType == 'tag' && ref.isNotEmpty) {
-            out.add({'label': 'tag ' + ref, 'url': 'https://github.com/$repoName/releases/tag/$ref'});
+            out.add({'label': 'tag $ref', 'url': 'https://github.com/$repoName/releases/tag/$ref'});
           } else {
             out.add({'label': repoName, 'url': 'https://github.com/$repoName'});
           }
@@ -359,7 +358,7 @@ class UserCardWidget extends StatelessWidget {
         for (final p in limited) {
           final fullName = p['forkee']?['full_name']?.toString() ?? '';
           if (fullName.isNotEmpty) {
-            out.add({'label': 'fork ' + fullName, 'url': 'https://github.com/$fullName'});
+            out.add({'label': 'fork $fullName', 'url': 'https://github.com/$fullName'});
           }
         }
         break;
@@ -368,7 +367,7 @@ class UserCardWidget extends StatelessWidget {
           final tag = p['release']?['tag_name']?.toString() ?? '';
           final html = p['release']?['html_url']?.toString() ?? '';
           final url = html.isNotEmpty ? html : 'https://github.com/$repoName/releases';
-          final label = tag.isNotEmpty ? ('release ' + tag) : 'release';
+          final label = tag.isNotEmpty ? 'release $tag' : 'release';
           out.add({'label': label, 'url': url});
         }
         break;
@@ -380,44 +379,6 @@ class UserCardWidget extends StatelessWidget {
       out.add({'label': repoName, 'url': 'https://github.com/$repoName'});
     }
     return out;
-  }
-
-  String _generateTooltipContent(String eventType, List<dynamic> payloads, String repoName) {
-    final limitedPayloads = payloads.take(5).toList();
-    
-    switch (eventType) {
-      case 'WatchEvent':
-        return 'Watch';
-      case 'PushEvent':
-        return limitedPayloads.map((p) {
-          final head = p['head'] ?? '';
-          return head.toString().substring(0, head.toString().length.clamp(0, 6));
-        }).join(', ');
-      case 'IssuesEvent':
-        return limitedPayloads.map((p) => '#${p['issue']['number']}').join(', ');
-      case 'PullRequestEvent':
-      case 'PullRequestReviewEvent':
-        return limitedPayloads.map((p) => '#${p['pull_request']['number']}').join(', ');
-      case 'PullRequestReviewCommentEvent':
-        return limitedPayloads.map((p) => '#${p['pull_request']['number']}').join(', ');
-      case 'DeleteEvent':
-        return limitedPayloads.map((p) => p['ref'] ?? '').join(', ');
-      case 'IssueCommentEvent':
-        return limitedPayloads.map((p) => '#${p['issue']['number']}').join(', ');
-      case 'CreateEvent':
-        return limitedPayloads.map((p) {
-          if (p['ref_type'] != 'repository') {
-            return p['ref'] ?? '';
-          }
-          return repoName;
-        }).join(', ');
-      case 'ForkEvent':
-        return payloads.map((p) => p['forkee']['full_name'] ?? '').join(', ');
-      case 'ReleaseEvent':
-        return payloads.map((p) => p['release']['name'] ?? '').join(', ');
-      default:
-        return eventType;
-    }
   }
 
   Future<void> _launchUrl(String url) async {
