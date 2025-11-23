@@ -6,3 +6,51 @@ node_modules
 __pycache__
 dist
 profile.*
+
+# Flutter build files
+flutter_project/build/
+flutter_project/.dart_tool/
+flutter_project/.flutter-plugins
+flutter_project/.flutter-plugins-dependencies
+flutter_project/pubspec.lock
+
+# Flutter web deployment
+flutter_web_deploy/
+
+# Flutter IDE files
+flutter_project/android/.gradle/
+flutter_project/android/captures/
+flutter_project/android/gradlew
+flutter_project/android/gradlew.bat
+flutter_project/android/local.properties
+flutter_project/ios/Flutter/Generated.xcconfig
+flutter_project/ios/Flutter/flutter_export_environment.sh
+
+# Flutter test files
+flutter_project/coverage/
+flutter_project/test_results/
+
+# Flutter temporary files
+flutter_project/*.log
+flutter_project/*.tmp
+flutter_project/*.temp
+
+# Flutter generated files
+flutter_project/lib/generated_plugin_registrant.dart
+flutter_project/windows/flutter/generated_plugin_registrant.cc
+flutter_project/windows/flutter/generated_plugin_registrant.h
+flutter_project/windows/flutter/generated_plugins.cmake
+flutter_project/macos/Flutter/GeneratedPluginRegistrant.swift
+flutter_project/linux/flutter/generated_plugin_registrant.cc
+flutter_project/linux/flutter/generated_plugin_registrant.h
+flutter_project/linux/flutter/generated_plugins.cmake
+
+# Flutter IDE specific
+flutter_project/.idea/
+flutter_project/*.iml
+flutter_project/.vscode/
+
+# Flutter platform specific
+flutter_project/macos/Pods/
+flutter_project/ios/Pods/
+flutter_project/ios/Podfile.lock
