@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import '../utils/localizations.dart';
 
@@ -93,10 +94,19 @@ class _CustomAppBarState extends State<CustomAppBar> {
           ),
         // GitHub repository link
         IconButton(
-          icon: Image.network(
-            'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png',
+          icon: SvgPicture.asset(
+            'assets/github-mark.svg',
             width: 24,
             height: 24,
+            colorFilter: ColorFilter.mode(Theme.of(context).iconTheme.color ?? const Color(0xFF586069), BlendMode.srcIn),
+            placeholderBuilder: (context) {
+              // 如果SVG加载失败，使用GitHub图标作为备用
+              return Icon(
+                Icons.code,
+                color: Theme.of(context).iconTheme.color ?? const Color(0xFF586069),
+                size: 24,
+              );
+            },
           ),
           tooltip: 'GitHub Repository',
           onPressed: () {

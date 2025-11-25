@@ -12,7 +12,7 @@ class CombinedFilterWidget extends StatefulWidget {
     super.key,
     required this.scrollController,
   });
-
+  
   @override
   State<CombinedFilterWidget> createState() => _CombinedFilterWidgetState();
 }
@@ -372,7 +372,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
         final isSelected = provider.selectedEventTypes.contains(event);
         
         return SizedBox(
-          width: 140,
+          height: 40, // 固定高度，更紧凑
           child: GestureDetector(
             onLongPress: () => _showEventDocumentation(event, provider),
             child: Tooltip(
@@ -381,18 +381,26 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
               verticalOffset: 10,
               waitDuration: const Duration(milliseconds: 250),
               showDuration: const Duration(seconds: 5),
-              child: CheckboxListTile(
-                title: Text(
-                  provider.enumEventShortNames[event] ?? event,
-                  style: const TextStyle(fontSize: 12),
-                ),
-                value: isSelected,
-                onChanged: (_) {
-                  provider.toggleEventType(event);
-                },
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 32,
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (_) {
+                        provider.toggleEventType(event);
+                      },
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      provider.enumEventShortNames[event] ?? event,
+                      style: const TextStyle(fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -453,51 +461,117 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
     );
   }
   
+  // 优化的按钮构建方法
+  Widget _buildActionButton(BuildContext context, String text, VoidCallback onPressed, {bool fullWidth = false}) {
+    return SizedBox(
+      height: 36, // 减小按钮高度
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(
+            horizontal: fullWidth ? 16 : 12,
+            vertical: 8,
+          ),
+          minimumSize: Size(fullWidth ? double.infinity : 0, 36),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap, // 减小触摸目标大小
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13), // 减小字体大小
+        ),
+      ),
+    );
+  }
+
   void _showCategoryEventsDialog(MapEntry<String, List<String>> entry, EventProvider provider) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('${AppLocalizations.translate(entry.key)} ${AppLocalizations.eventTypes}'),
-            Row(
-              children: [
-                TextButton(
-                  onPressed: () {
-                    // Select all events in this category
-                    final eventsToSelect = entry.value.where((event) => !provider.selectedEventTypes.contains(event)).toList();
-                    for (final event in eventsToSelect) {
-                      provider.toggleEventType(event);
-                    }
-                    Navigator.pop(context);
-                  },
-                  child: Text(AppLocalizations.selectAll),
+        title: Text(AppLocalizations.translate(entry.key)),
+        content: Container(
+          width: isMobile ? screenWidth * 0.9 : screenWidth * 0.7,
+          constraints: BoxConstraints(
+            maxWidth: 400,
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 移动端优化的按钮布局
+              isMobile 
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildActionButton(
+                        context,
+                        AppLocalizations.selectAll,
+                        () {
+                          final eventsToSelect = entry.value.where((event) => !provider.selectedEventTypes.contains(event)).toList();
+                          for (final event in eventsToSelect) {
+                            provider.toggleEventType(event);
+                          }
+                          Navigator.pop(context);
+                        },
+                        fullWidth: true,
+                      ),
+                      const SizedBox(height: 4),
+                      _buildActionButton(
+                        context,
+                        AppLocalizations.deselectAll,
+                        () {
+                          final eventsToDeselect = entry.value.where((event) => provider.selectedEventTypes.contains(event)).toList();
+                          for (final event in eventsToDeselect) {
+                            provider.toggleEventType(event);
+                          }
+                          Navigator.pop(context);
+                        },
+                        fullWidth: true,
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildActionButton(
+                        context,
+                        AppLocalizations.selectAll,
+                        () {
+                          final eventsToSelect = entry.value.where((event) => !provider.selectedEventTypes.contains(event)).toList();
+                          for (final event in eventsToSelect) {
+                            provider.toggleEventType(event);
+                          }
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionButton(
+                        context,
+                        AppLocalizations.deselectAll,
+                        () {
+                          final eventsToDeselect = entry.value.where((event) => provider.selectedEventTypes.contains(event)).toList();
+                          for (final event in eventsToDeselect) {
+                            provider.toggleEventType(event);
+                          }
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+              const SizedBox(height: 8),
+              // 事件列表
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: entry.value.map((event) => _buildEventCheckbox(event, provider)).toList(),
+                  ),
                 ),
-                TextButton(
-                  onPressed: () {
-                    // Deselect all events in this category
-                    final eventsToDeselect = entry.value.where((event) => provider.selectedEventTypes.contains(event)).toList();
-                    for (final event in eventsToDeselect) {
-                      provider.toggleEventType(event);
-                    }
-                    Navigator.pop(context);
-                  },
-                  child: Text(AppLocalizations.deselectAll),
-                ),
-              ],
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: entry.value.length,
-            itemBuilder: (context, index) {
-              final event = entry.value[index];
-              return _buildEventCheckbox(event, provider);
-            },
+              ),
+            ],
           ),
         ),
         actions: [

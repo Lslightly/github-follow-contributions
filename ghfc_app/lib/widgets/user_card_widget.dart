@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/event_data.dart';
 import '../providers/event_provider.dart';
+import '../utils/localizations.dart';
 import 'package:provider/provider.dart';
 
 class UserCardWidget extends StatelessWidget {
@@ -72,7 +73,7 @@ class UserCardWidget extends StatelessWidget {
                 children: [
                   _buildSummaryTag(
                     context,
-                    'work',
+                    AppLocalizations.work,
                     user.summaryTopics['work'] ?? '',
                     Theme.of(context).colorScheme.primaryContainer,
                     Theme.of(context).colorScheme.onPrimaryContainer,
@@ -80,7 +81,7 @@ class UserCardWidget extends StatelessWidget {
                   const SizedBox(width: 8),
                   _buildSummaryTag(
                     context,
-                    'discuss',
+                    AppLocalizations.discuss,
                     user.summaryTopics['discuss'] ?? '',
                     Theme.of(context).colorScheme.secondaryContainer,
                     Theme.of(context).colorScheme.onSecondaryContainer,
@@ -88,7 +89,7 @@ class UserCardWidget extends StatelessWidget {
                   const SizedBox(width: 8),
                   _buildSummaryTag(
                     context,
-                    'watch',
+                    AppLocalizations.watch,
                     user.summaryTopics['watch'] ?? '',
                     Theme.of(context).colorScheme.tertiaryContainer,
                     Theme.of(context).colorScheme.onTertiaryContainer,
@@ -402,11 +403,19 @@ class _AvatarState extends State<_Avatar> {
   int _retryCount = 0;
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 2);
+  String _imageUrl = '';
   
   @override
   void initState() {
     super.initState();
+    _imageUrl = _buildImageUrl();
     _startRetryTimer();
+  }
+  
+  String _buildImageUrl() {
+    // 添加时间戳参数来避免缓存，确保每次重试都会重新请求
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return 'https://avatars.githubusercontent.com/${widget.username}?v=4&s=80&_t=$timestamp&_retry=$_retryCount';
   }
   
   void _startRetryTimer() {
@@ -415,7 +424,8 @@ class _AvatarState extends State<_Avatar> {
       Future.delayed(_retryDelay * (_retryCount + 1), () {
         if (mounted && _failed) {
           setState(() {
-            _failed = false; // 重置失败状态，重新尝试加载
+            _failed = false; // 重置失败状态
+            _imageUrl = _buildImageUrl(); // 构建新的URL来避免缓存
           });
         }
       });
@@ -437,6 +447,7 @@ class _AvatarState extends State<_Avatar> {
       setState(() {
         _failed = false;
         _retryCount = 0; // 重置重试计数
+        _imageUrl = _buildImageUrl(); // 构建新的URL
       });
     }
   }
@@ -458,37 +469,40 @@ class _AvatarState extends State<_Avatar> {
                     ),
                   )
                 : CircleAvatar(
-                    backgroundImage: NetworkImage(
-                        'https://avatars.githubusercontent.com/${widget.username}?v=4&s=80'),
+                    backgroundImage: NetworkImage(_imageUrl),
                     onBackgroundImageError: _onImageError,
                   ),
           ),
           // 刷新按钮（仅在失败时显示）
           if (_failed)
             Positioned(
-              right: -4,
-              top: -4,
-              child: GestureDetector(
-                onTap: _manualRetry,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.refresh,
-                    size: 12,
-                    color: Colors.white,
+              right: -8,
+              top: -8,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _manualRetry,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.refresh,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
