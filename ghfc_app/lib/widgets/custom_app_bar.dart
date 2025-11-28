@@ -51,21 +51,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // GitHub Icon
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.code,
-              color: Color(0xFF24292E),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
           // Title with gradient effect
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(

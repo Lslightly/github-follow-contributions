@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppLocalizations {
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
-      'app_title': 'GitHub User Activity Tracking',
+      'app_title': 'GH Activity Tracking',
       'search_users': 'Filter Users',
       'event_type_filter': 'Event Type Filter',
       'select_all': 'Select All',
