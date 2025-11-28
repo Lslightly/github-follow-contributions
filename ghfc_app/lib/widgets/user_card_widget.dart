@@ -152,7 +152,7 @@ class UserCardWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: InkWell(
+                child: GestureDetector(
                   onTap: () => _launchUrl('https://github.com/${entry.key}'),
                   child: Text(
                     entry.key,
