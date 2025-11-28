@@ -68,37 +68,10 @@ class UserCardWidget extends StatelessWidget {
                   ),
                 ],
               ),
-              // Summary tags
-              Row(
-                children: [
-                  _buildSummaryTag(
-                    context,
-                    AppLocalizations.work,
-                    user.summaryTopics['work'] ?? '',
-                    Theme.of(context).colorScheme.primaryContainer,
-                    Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildSummaryTag(
-                    context,
-                    AppLocalizations.discuss,
-                    user.summaryTopics['discuss'] ?? '',
-                    Theme.of(context).colorScheme.secondaryContainer,
-                    Theme.of(context).colorScheme.onSecondaryContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildSummaryTag(
-                    context,
-                    AppLocalizations.watch,
-                    user.summaryTopics['watch'] ?? '',
-                    Theme.of(context).colorScheme.tertiaryContainer,
-                    Theme.of(context).colorScheme.onTertiaryContainer,
-                  ),
-                ],
-              ),
+              _buildUserHeaderRightSummary(context), // Summary tags
             ],
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 9),
           
           if (eventEntries.length <= 6)
             ...eventEntries.map((entry) => _buildEventRow(context, entry, eventProvider))
@@ -120,41 +93,91 @@ class UserCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildEventRow(BuildContext context, MapEntry<String, Map<String, List<dynamic>>> entry, EventProvider eventProvider) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEAECEF))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildUserHeaderRightSummary(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final workTag = _buildSummaryTag(
+          context,
+          AppLocalizations.work,
+          user.summaryTopics['work'] ?? '',
+          Theme.of(context).colorScheme.primaryContainer,
+          Theme.of(context).colorScheme.onPrimaryContainer,
+        );
+    final discussTag = _buildSummaryTag(
+          context,
+          AppLocalizations.discuss,
+          user.summaryTopics['discuss'] ?? '',
+          Theme.of(context).colorScheme.secondaryContainer,
+          Theme.of(context).colorScheme.onSecondaryContainer,
+    );
+    final watchTag = _buildSummaryTag(
+          context,
+          AppLocalizations.watch,
+          user.summaryTopics['watch'] ?? '',
+          Theme.of(context).colorScheme.tertiaryContainer,
+          Theme.of(context).colorScheme.onTertiaryContainer,
+    );
+    if (isMobile) {
+      return Column(
         children: [
-          Expanded(
-            child: InkWell(
-              onTap: () => _launchUrl('https://github.com/${entry.key}'),
-              child: Text(
-                entry.key,
-                style: const TextStyle(
-                  color: Color(0xFF0366D6),
-                  fontWeight: FontWeight.w500,
+          workTag,
+          const SizedBox(height: 2),
+          discussTag,
+          const SizedBox(height: 2),
+          watchTag
+        ],
+      );
+    }
+    return Row(
+      children: [
+        workTag,
+        const SizedBox(width: 8),
+        discussTag,
+        const SizedBox(width: 8),
+        watchTag,
+      ],
+    );
+  }
+
+  Widget _buildEventRow(BuildContext context, MapEntry<String, Map<String, List<dynamic>>> entry, EventProvider eventProvider) {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onLongPress: () {},
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFEAECEF))),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _launchUrl('https://github.com/${entry.key}'),
+                  child: Text(
+                    entry.key,
+                    style: const TextStyle(
+                      color: Color(0xFF0366D6),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                ...entry.value.entries.map((eventEntry) => 
-                  _buildEventTag(context, eventEntry.key, eventEntry.value, entry.key, eventProvider),
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    ...entry.value.entries.map((eventEntry) => 
+                      _buildEventTag(context, eventEntry.key, eventEntry.value, entry.key, eventProvider),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -204,7 +227,7 @@ class UserCardWidget extends StatelessWidget {
 
     return CompositedTransformTarget(
       link: link,
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => _showEventPopover(context, link, eventType, payloads, repoName),
         onLongPress: () => _showEventPopover(context, link, eventType, payloads, repoName),
         child: Container(
@@ -240,7 +263,8 @@ class UserCardWidget extends StatelessWidget {
             ),
             CompositedTransformFollower(
               link: link,
-              offset: const Offset(0, -8),
+              targetAnchor: Alignment.centerRight,
+              followerAnchor: Alignment.centerRight,
               showWhenUnlinked: false,
               child: Material(
                 color: Colors.transparent,
