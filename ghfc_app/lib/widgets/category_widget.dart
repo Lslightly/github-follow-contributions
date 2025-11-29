@@ -5,12 +5,14 @@ import 'package:ghfc_app/utils/localizations.dart';
 
 class PlainCategoryWidget extends StatelessWidget {
   final String category;
+  final Color? textcolor;
   final Widget? selectedStatusWidget;
 
   const PlainCategoryWidget({
     super.key,
     required this.category,
     this.selectedStatusWidget,
+    this.textcolor,
   });
 
   @override
@@ -19,7 +21,7 @@ class PlainCategoryWidget extends StatelessWidget {
     final textWidget = Text(
       AppLocalizations.category(category),
       style: TextStyle(
-        color: (selectedStatusWidget == null)?Colors.black:Colors.grey,
+        color: textcolor,
         fontSize: 11,
         fontWeight: FontWeight.bold,
       ),

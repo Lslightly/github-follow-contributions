@@ -94,29 +94,21 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // User filter row
-          Consumer<EventProvider>(
-            builder: (context, provider, _) {
-              return Row(
-                children: [
-                  const Icon(Icons.search, size: 20, color: Color(0xFF586069)),
-                  const SizedBox(width: 8),
-                  _buildUserSearchBox(context, provider),
-                  const SizedBox(width: 12),
-                  // Legend expand button
-                  _buildLegendToggleButton(),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          // Compact legend
-          _buildEventFilter(),
-        ],
+      child: Consumer<EventProvider>(
+        builder: (context, provider, _) {
+          return Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Icon(Icons.search, size: 20, color: Color(0xFF586069)),
+              const SizedBox(width: 8),
+              _buildUserSearchBox(context, provider),
+              const SizedBox(width: 8),
+              // Legend expand button
+              _buildEventFilter(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -272,12 +264,13 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       return '$shortName: $description';
     }).join('\n');
     Widget? selectedStatusWidget;
-    if (selectedCount < totalCount) {
+    Color textcolor = (selectedCount == 0)?Colors.grey:Colors.black;
+    if (selectedCount < totalCount && selectedCount != 0) {
       selectedStatusWidget = Text(
         '$selectedCount/$totalCount',
         style: TextStyle(
           fontSize: 10,
-          color: Colors.grey,
+          color: textcolor,
         ),
       );
     }
@@ -290,7 +283,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       showDuration: const Duration(seconds: 3),
       child: GestureDetector(
         onTap: () => _showCategoryEventsDialog(entry, provider),
-        child: PlainCategoryWidget(category: entry.key, selectedStatusWidget: selectedStatusWidget),
+        child: PlainCategoryWidget(category: entry.key, selectedStatusWidget: selectedStatusWidget, textcolor: textcolor),
       ),
     );
   }
