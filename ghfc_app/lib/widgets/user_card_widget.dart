@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ghfc_app/widgets/category_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/event_data.dart';
 import '../providers/event_provider.dart';
-import '../utils/localizations.dart';
 import 'package:provider/provider.dart';
 
 class UserCardWidget extends StatelessWidget {
@@ -48,32 +48,10 @@ class UserCardWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // User header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  _Avatar(username: user.username),
-                  const SizedBox(width: 10),
-                  InkWell(
-                    onTap: () => _launchUrl('https://github.com/${user.username}'),
-                    child: Text(
-                      user.username,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF24292E),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              _buildUserHeaderRightSummary(context), // Summary tags
-            ],
-          ),
+          _buildUserHeader(context),
           const SizedBox(height: 9),
           
-          if (eventEntries.length <= 6)
+          if (eventEntries.length <= 4)
             ...eventEntries.map((entry) => _buildEventRow(context, entry, eventProvider))
           else
             SizedBox(
@@ -93,48 +71,43 @@ class UserCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildUserHeaderRightSummary(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
-    final workTag = _buildSummaryTag(
-          context,
-          AppLocalizations.work,
-          user.summaryTopics['work'] ?? '',
-          Theme.of(context).colorScheme.primaryContainer,
-          Theme.of(context).colorScheme.onPrimaryContainer,
-        );
-    final discussTag = _buildSummaryTag(
-          context,
-          AppLocalizations.discuss,
-          user.summaryTopics['discuss'] ?? '',
-          Theme.of(context).colorScheme.secondaryContainer,
-          Theme.of(context).colorScheme.onSecondaryContainer,
-    );
-    final watchTag = _buildSummaryTag(
-          context,
-          AppLocalizations.watch,
-          user.summaryTopics['watch'] ?? '',
-          Theme.of(context).colorScheme.tertiaryContainer,
-          Theme.of(context).colorScheme.onTertiaryContainer,
-    );
-    if (isMobile) {
-      return Column(
-        children: [
-          workTag,
-          const SizedBox(height: 2),
-          discussTag,
-          const SizedBox(height: 2),
-          watchTag
-        ],
-      );
-    }
+  Row _buildUserHeader(BuildContext context) {
     return Row(
-      children: [
-        workTag,
-        const SizedBox(width: 8),
-        discussTag,
-        const SizedBox(width: 8),
-        watchTag,
-      ],
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                _Avatar(username: user.username),
+                const SizedBox(width: 10),
+                InkWell(
+                  onTap: () => _launchUrl('https://github.com/${user.username}'),
+                  child: Text(
+                    user.username,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF24292E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Expanded(child: _buildUserHeaderRightSummary(context)), // Summary tags
+          ],
+        );
+  }
+
+  Widget _buildUserHeaderRightSummary(BuildContext context) {
+    final children = ['work', 'discuss', 'watch']
+        .map((category) => _buildSummaryTag(context, category))
+        .toList();
+    return Wrap(
+      alignment: WrapAlignment.end,
+      runAlignment: WrapAlignment.end,
+      spacing: 3.0,
+      runSpacing: 3.0,
+      children: children,
     );
   }
 
@@ -182,26 +155,12 @@ class UserCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryTag(BuildContext context, String title, String tooltip, Color backgroundColor, Color textColor) {
+  Widget _buildSummaryTag(BuildContext context, String category) {
     return Tooltip(
-      message: tooltip,
+      message: user.summaryTopics[category] ?? '',
       preferBelow: false,
       verticalOffset: 14,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
+      child: PlainCategoryWidget(category: category),
     );
   }
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ghfc_app/utils/color.dart';
+import 'package:ghfc_app/widgets/category_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
@@ -76,7 +78,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       child: _isExpanded ? _buildExpandedView() : _buildCollapsedView(),
     );
   }
-  
+
   Widget _buildExpandedView() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -94,6 +96,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // User filter row
           Consumer<EventProvider>(
@@ -102,34 +105,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
                 children: [
                   const Icon(Icons.search, size: 20, color: Color(0xFF586069)),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.filterUsers,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                        ),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        suffixIcon: provider.userQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () => provider.setUserQuery(''),
-                            )
-                          : null,
-                      ),
-                      onChanged: provider.setUserQuery,
-                    ),
-                  ),
+                  _buildUserSearchBox(context, provider),
                   const SizedBox(width: 12),
                   // Legend expand button
                   _buildLegendToggleButton(),
@@ -139,12 +115,12 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
           ),
           const SizedBox(height: 12),
           // Compact legend
-          _buildCompactLegend(),
+          _buildEventFilter(),
         ],
       ),
     );
   }
-  
+
   Widget _buildCollapsedView() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -153,7 +129,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
         border: Border.all(color: const Color(0xFFE1E4E8)),
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
-          BoxShadow(
+        BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -161,43 +137,54 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
         ],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.filter_list, size: 16, color: Color(0xFF586069)),
-              const SizedBox(width: 8),
-              Consumer<EventProvider>(
-                builder: (context, provider, _) {
-                  return Text(
-                    provider.userQuery.isNotEmpty 
-                      ? '${AppLocalizations.userFilter}${provider.userQuery}'
-                      : AppLocalizations.filterUsers,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
-                  );
-                },
-              ),
-            ],
+          const Icon(Icons.filter_list, size: 16, color: Color(0xFF586069)),
+          Consumer<EventProvider>(
+            builder: (context, provider, _) {
+              return Text(
+                provider.userQuery.isNotEmpty 
+                  ? '${AppLocalizations.userFilter}${provider.userQuery}'
+                  : AppLocalizations.filterUsers,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
+              );
+            },
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Consumer<EventProvider>(
-                builder: (context, provider, _) {
-                  final selectedCount = provider.selectedEventTypes.length;
-                  final totalCount = provider.eventTypes.length;
-                  return Text(
-                    '$selectedCount/$totalCount',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-              _buildLegendToggleButton(),
-            ],
-          ),
+          const Spacer(),
+          _buildEventFilter(),
         ],
+      ),
+    );
+  }
+
+  Expanded _buildUserSearchBox(BuildContext context, EventProvider provider) {
+    return Expanded(
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: AppLocalizations.filterUsers,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(6),
+            borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(6),
+            borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(6),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          suffixIcon: provider.userQuery.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 18),
+                onPressed: () => provider.setUserQuery(''),
+              )
+            : null,
+        ),
+        onChanged: provider.setUserQuery,
       ),
     );
   }
@@ -253,30 +240,28 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       },
     );
   }
-  
-  Widget _buildCompactLegend() {
-    return Consumer<EventProvider>(
-      builder: (context, provider, _) {
-        return SizedBox(
-          height: 24,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: provider.topicCategories.length,
-            itemBuilder: (context, index) {
-              final entry = provider.topicCategories.entries.elementAt(index);
-              return Padding(
+
+  Widget _buildEventFilter() {
+    return SizedBox(
+      height: 28,
+      child: Consumer<EventProvider>(
+        builder: (context, provider, _) {
+          final children = provider.topicCategories.entries
+            .map((entry) => Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: _buildCompactCategoryChip(entry, provider),
-              );
-            },
-          ),
-        );
-      },
+                child: _buildCategoryChip(entry, provider),
+            ))
+            .toList();
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: children,
+          );
+        },
+      ),
     );
   }
   
-  Widget _buildCompactCategoryChip(MapEntry<String, List<String>> entry, EventProvider provider) {
-    final categoryColor = _getCategoryColor(context, entry.key);
+  Widget _buildCategoryChip(MapEntry<String, List<String>> entry, EventProvider provider) {
     final selectedCount = entry.value.where((event) => provider.selectedEventTypes.contains(event)).length;
     final totalCount = entry.value.length;
     
@@ -286,6 +271,16 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       final description = provider.getEventDescription(event);
       return '$shortName: $description';
     }).join('\n');
+    Widget? selectedStatusWidget;
+    if (selectedCount < totalCount) {
+      selectedStatusWidget = Text(
+        '$selectedCount/$totalCount',
+        style: TextStyle(
+          fontSize: 10,
+          color: Colors.grey,
+        ),
+      );
+    }
     
     return Tooltip(
       message: tooltipMessage,
@@ -295,46 +290,13 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       showDuration: const Duration(seconds: 3),
       child: GestureDetector(
         onTap: () => _showCategoryEventsDialog(entry, provider),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: categoryColor.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selectedCount > 0 ? categoryColor : Colors.grey.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                AppLocalizations.translate(entry.key),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: selectedCount > 0 ? Colors.black87 : Colors.grey,
-                ),
-              ),
-              if (selectedCount < totalCount) ...[
-                const SizedBox(width: 4),
-                Text(
-                  '$selectedCount/$totalCount',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+        child: PlainCategoryWidget(category: entry.key, selectedStatusWidget: selectedStatusWidget),
       ),
     );
   }
   
   Widget _buildCategoryDialogItem(MapEntry<String, List<String>> entry, EventProvider provider) {
-    final categoryColor = _getCategoryColor(context, entry.key);
+    final categoryColor = ColorUtil.getBackGroundColor(context, entry.key);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +313,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
         ),
@@ -408,19 +370,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
       },
     );
   }
-  
-  Color _getCategoryColor(BuildContext context, String category) {
-    switch (category) {
-      case 'work':
-        return Theme.of(context).colorScheme.primaryContainer;
-      case 'discuss':
-        return Theme.of(context).colorScheme.secondaryContainer;
-      case 'watch':
-        return Theme.of(context).colorScheme.tertiaryContainer;
-      default:
-        return Colors.grey;
-    }
-  }
+
   
   void _showEventDocumentation(String event, EventProvider provider) {
     final link = provider.eventDocLinks[event] ?? 'https://docs.github.com/en/webhooks/webhook-events-and-payloads';

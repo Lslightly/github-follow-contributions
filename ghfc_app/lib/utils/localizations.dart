@@ -33,6 +33,7 @@ class AppLocalizations {
       'ReleaseEvent_desc': 'Released a software version',
       'GollumEvent_desc': 'Updated repository Wiki pages',
       'PublicEvent_desc': 'Made a repository public',
+      'Events': 'Events',
     },
     'zh': {
       'app_title': 'GitHub 用户活动追踪',
@@ -65,6 +66,7 @@ class AppLocalizations {
       'ReleaseEvent_desc': '发布软件版本',
       'GollumEvent_desc': '更新仓库 Wiki 页面',
       'PublicEvent_desc': '将仓库设置为公开',
+      'Events': '事件',
     },
   };
 
@@ -90,9 +92,12 @@ class AppLocalizations {
   static String get deselectAll => translate('deselect_all');
   static String get close => translate('close');
   static String get viewDocs => translate('view_docs');
-  static String get work => translate('work');
-  static String get discuss => translate('discuss');
-  static String get watch => translate('watch');
+  static String category(String str) {
+    if (["work", "discuss", "watch"].contains(str)) {
+      return translate(str);
+    }
+    throw "Unknown category $str";
+  }
   static String get userFilter => translate('user_filter');
   static String get filterUsers => translate('filter_users');
   static String get eventTypes => translate('event_types');
@@ -114,4 +119,5 @@ class AppLocalizations {
   static String get releaseEventDesc => translate('ReleaseEvent_desc');
   static String get gollumEventDesc => translate('GollumEvent_desc');
   static String get publicEventDesc => translate('PublicEvent_desc');
+  static String get events => translate("Events");
 }
