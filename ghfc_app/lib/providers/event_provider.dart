@@ -6,10 +6,6 @@ import 'package:flutter/widgets.dart';
 import '../models/event_data.dart';
 import '../utils/localizations.dart';
 
-class SimpleState extends ChangeNotifier {
-  
-}
-
 class EventProvider extends ChangeNotifier {
   List<EventData> _users = [];
   List<String> _eventTypes = [];

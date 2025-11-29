@@ -21,7 +21,6 @@ class CombinedFilterWidget extends StatefulWidget {
 
 class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
   bool _isExpanded = true;
-  bool _isScrollingDown = false;
   double _lastScrollPosition = 0;
   
   @override
@@ -51,19 +50,16 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
     final currentPosition = widget.scrollController.position.pixels;
     final isScrollingDown = currentPosition > _lastScrollPosition && currentPosition > 50;
     
-    if (isScrollingDown != _isScrollingDown) {
+    if (isScrollingDown) {
       setState(() {
-        _isScrollingDown = isScrollingDown;
-        if (_isScrollingDown) {
-          _isExpanded = false;
-        }
+        _isExpanded = false;
       });
     }
     
     _lastScrollPosition = currentPosition;
     
     // Auto-expand when scrolling up
-    if (!_isScrollingDown && currentPosition < 50) {
+    if (!isScrollingDown && currentPosition < 50) {
       setState(() {
         _isExpanded = true;
       });
@@ -94,21 +90,15 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
           ),
         ],
       ),
-      child: Consumer<EventProvider>(
-        builder: (context, provider, _) {
-          return Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(Icons.search, size: 20, color: Color(0xFF586069)),
-              const SizedBox(width: 8),
-              _buildUserSearchBox(context, provider),
-              const SizedBox(width: 8),
-              // Legend expand button
-              _buildEventFilter(),
-            ],
-          );
-        },
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Consumer<EventProvider>(builder: (context, provider, _) => _buildUserSearchBox(context, provider)),
+          const SizedBox(width: 8),
+          // Legend expand button
+          _buildEventFilter(),
+        ],
       ),
     );
   }
@@ -132,18 +122,28 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.filter_list, size: 16, color: Color(0xFF586069)),
-          Consumer<EventProvider>(
-            builder: (context, provider, _) {
-              return Text(
-                provider.userQuery.isNotEmpty 
-                  ? '${AppLocalizations.userFilter}${provider.userQuery}'
-                  : AppLocalizations.filterUsers,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
-              );
-            },
+          GestureDetector(
+            onTap: () => setState(() {
+              _isExpanded = true;
+            }),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Icon(Icons.filter_list, size: 16, color: Color(0xFF586069)),
+                Consumer<EventProvider>(
+                  builder: (context, provider, _) {
+                    return Text(
+                      provider.userQuery.isNotEmpty 
+                        ? '${AppLocalizations.userFilter}${provider.userQuery}'
+                        : AppLocalizations.filterUsers,
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF586069)),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
           _buildEventFilter(),
         ],
       ),
@@ -151,10 +151,18 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
   }
 
   Expanded _buildUserSearchBox(BuildContext context, EventProvider provider) {
+    // Use a TextEditingController to control the TextField's text
+    final TextEditingController controller = TextEditingController(text: provider.userQuery);
+    // Move the cursor to the end of the text
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: controller.text.length),
+    );
+
     return Expanded(
       child: TextField(
+        controller: controller, // Assign the controller
         decoration: InputDecoration(
-          hintText: AppLocalizations.filterUsers,
+          hintText: AppLocalizations.filterUsers, // Hint text should be static
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
             borderSide: const BorderSide(color: Color(0xFFE1E4E8)),
@@ -168,13 +176,15 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
             borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
           ),
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           suffixIcon: provider.userQuery.isNotEmpty // clear user input
-            ? IconButton(
-                icon: const Icon(Icons.clear, size: 18),
-                onPressed: () => provider.setUserQuery(''),
-              )
-            : null,
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    // This will now trigger a rebuild and the controller will be updated
+                    provider.setUserQuery('');
+                  },
+                )
+              : null,
         ),
         onChanged: provider.setUserQuery,
       ),
@@ -234,22 +244,18 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
   }
 
   Widget _buildEventFilter() {
-    return SizedBox(
-      height: 28,
-      child: Consumer<EventProvider>(
-        builder: (context, provider, _) {
-          final children = provider.topicCategories.entries
-            .map((entry) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _buildCategoryChip(entry, provider),
-            ))
-            .toList();
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: children,
-          );
-        },
-      ),
+    return Consumer<EventProvider>(
+      builder: (context, provider, _) {
+        final children = provider.topicCategories.entries
+          .map((entry) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _buildCategoryChip(entry, provider),
+          ))
+          .toList();
+        return Wrap(
+          children: children,
+        );
+      },
     );
   }
   
