@@ -45,16 +45,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FA),
-      appBar: const CustomAppBar(),
-      body: Column(
-        children: [
-          CombinedFilterWidget(scrollController: _scrollController),
-          Expanded(
-            child: OptimizedListWidget(scrollController: _scrollController),
-          ),
-        ],
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF6F8FA),
+        appBar: const CustomAppBar(),
+        body: Column(
+          children: [
+            CombinedFilterWidget(scrollController: _scrollController),
+            Expanded(
+              child: OptimizedListWidget(scrollController: _scrollController),
+            ),
+          ],
+        ),
       ),
     );
   }

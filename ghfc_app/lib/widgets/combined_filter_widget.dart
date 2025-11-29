@@ -169,7 +169,7 @@ class _CombinedFilterWidgetState extends State<CombinedFilterWidget> {
           ),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          suffixIcon: provider.userQuery.isNotEmpty
+          suffixIcon: provider.userQuery.isNotEmpty // clear user input
             ? IconButton(
                 icon: const Icon(Icons.clear, size: 18),
                 onPressed: () => provider.setUserQuery(''),
