@@ -1,0 +1,1 @@
+GitHub Follow Contributions 汇总关注用户的贡献并生成可视化页面。本次变更聚焦 Flutter 迁移、事件分析重构与单测完善，支持Web/Android构建。

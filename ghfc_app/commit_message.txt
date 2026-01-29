@@ -1,0 +1,33 @@
+feat(i18n,ui,avatar,provider): 本地化、过滤控件、头像重试与分页优化
+
+- 本地化体系
+  - 新增 AppLocalizations 支持中英文词条与事件描述
+  - 通过 ValueNotifier 驱动语言切换与 UI 重建
+  - 在 CustomAppBar、CombinedFilterWidget、EventProvider 中集成
+
+- UI 组件
+  - 顶部栏新增渐变标题、语言切换弹窗与仓库入口
+  - 组合筛选控件支持滚动折叠/展开、类目全选/全不选与事件说明
+  - UserCard 事件分组与弹出链接，提升可读性和可操作性
+
+- 架构与实现
+  - 采用 Provider + ChangeNotifier 管理事件与过滤状态
+  - 统一事件短名、样式、文档链接，降低 UI 层复杂度
+  - 通过分页与懒加载实现无限滚动
+
+- 性能优化
+  - 分页渲染与按需构建弹出项减少初始与滚动开销
+  - 折叠顶部栏与紧凑 legend 提升移动端可视与响应
+
+- 安全改进
+  - URL 跳转前 canLaunchUrl 校验
+  - 头像失败有限重试与手动刷新，避免资源滥用
+
+- 应用名与图标
+  - Android app_name 与 Web 标题统一为英文版
+  - 配置 flutter_launcher_icons 使用自定义图标与背景色
+
+Refs: lib/utils/localizations.dart, lib/widgets/custom_app_bar.dart,
+      lib/widgets/combined_filter_widget.dart, lib/widgets/user_card_widget.dart,
+      lib/providers/event_provider.dart, ghfc_app/pubspec.yaml,
+      android/app/src/main/AndroidManifest.xml, android/res/values/strings.xml
